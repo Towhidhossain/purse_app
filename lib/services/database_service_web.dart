@@ -1,13 +1,11 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/icons.dart' as app_icons;
 import '../models/expense.dart';
 import '../models/income.dart';
 
 class DatabaseService {
   DatabaseService._internal() {
-    _initializeCategories();
   }
   static final DatabaseService _instance = DatabaseService._internal();
   factory DatabaseService() => _instance;
@@ -29,21 +27,6 @@ class DatabaseService {
     _nextIncomeId = _prefs!.getInt('nextIncomeId') ?? 1;
     _nextTransactionId = _prefs!.getInt('nextTransactionId') ?? 1;
     return _prefs!;
-  }
-
-  Future<void> _initializeCategories() async {
-    final prefs = await _preferences;
-    final existing = prefs.getStringList(cTable);
-    if (existing == null || existing.isEmpty) {
-      final categories = app_icons.icons.keys.map((title) {
-        return jsonEncode({
-          'title': title,
-          'entries': 0,
-          'totalAmount': '0.0',
-        });
-      }).toList();
-      await prefs.setStringList(cTable, categories);
-    }
   }
 
   Future<List<Map<String, dynamic>>> fetchCategories() async {
@@ -68,6 +51,41 @@ class DatabaseService {
       return jsonEncode(map);
     }).toList();
     await prefs.setStringList(cTable, updated);
+  }
+
+  Future<void> insertCategory(String name) async {
+    final prefs = await _preferences;
+    final data = prefs.getStringList(cTable) ?? [];
+    data.add(jsonEncode({
+      'title': name,
+      'entries': 0,
+      'totalAmount': '0.0',
+    }));
+    await prefs.setStringList(cTable, data);
+  }
+
+  Future<void> deleteCategory(String name) async {
+    final prefs = await _preferences;
+    final data = prefs.getStringList(cTable) ?? [];
+    final filtered = data.where((e) {
+      final map = jsonDecode(e);
+      return map['title'] != name;
+    }).toList();
+    await prefs.setStringList(cTable, filtered);
+
+    final expenses = prefs.getStringList(eTable) ?? [];
+    final remainingExpenses = expenses.where((e) {
+      final map = jsonDecode(e);
+      return map['category'] != name;
+    }).toList();
+    await prefs.setStringList(eTable, remainingExpenses);
+
+    final transactions = prefs.getStringList(tTable) ?? [];
+    final remainingTx = transactions.where((e) {
+      final map = jsonDecode(e);
+      return map['category'] != name;
+    }).toList();
+    await prefs.setStringList(tTable, remainingTx);
   }
 
   Future<int> insertExpense(Expense exp) async {
@@ -148,6 +166,15 @@ class DatabaseService {
       return id != incomeId && id.toString() != incomeId.toString();
     }).toList();
     await prefs.setStringList(iTable, filtered);
+
+    final tx = prefs.getStringList(tTable) ?? [];
+    final remainingTx = tx.where((e) {
+      final map = jsonDecode(e);
+      final id = map['linkId'];
+      final type = map['linkType'];
+      return !(((id == incomeId) || (id.toString() == incomeId.toString())) && type == 'income');
+    }).toList();
+    await prefs.setStringList(tTable, remainingTx);
   }
 
   Future<void> updateIncome(Income updated, int id) async {

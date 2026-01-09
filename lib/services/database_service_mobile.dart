@@ -1,7 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../constants/icons.dart' as app_icons;
 import '../models/expense.dart';
 import '../models/income.dart';
 
@@ -69,14 +68,6 @@ class DatabaseService {
         linkId INTEGER,
         linkType TEXT
       )''');
-
-      for (int i = 0; i < app_icons.icons.length; i++) {
-        await txn.insert(cTable, {
-          'title': app_icons.icons.keys.toList()[i],
-          'entries': 0,
-          'totalAmount': (0.0).toString(),
-        });
-      }
     });
   }
 
@@ -136,6 +127,24 @@ class DatabaseService {
         }
       }
     }
+  }
+
+  Future<void> insertCategory(String name) async {
+    final db = await database;
+    await db.insert(cTable, {
+      'title': name,
+      'entries': 0,
+      'totalAmount': (0.0).toString(),
+    });
+  }
+
+  Future<void> deleteCategory(String name) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(cTable, where: 'title = ?', whereArgs: [name]);
+      await txn.delete(eTable, where: 'category = ?', whereArgs: [name]);
+      await txn.delete(tTable, where: 'category = ?', whereArgs: [name]);
+    });
   }
 
   Future<List<Map<String, dynamic>>> fetchCategories() async {
@@ -224,9 +233,10 @@ class DatabaseService {
 
   Future<void> deleteIncome(int incomeId) async {
     final db = await database;
-    await db.transaction(
-      (txn) async => txn.delete(iTable, where: 'id == ?', whereArgs: [incomeId]),
-    );
+    await db.transaction((txn) async {
+      await txn.delete(iTable, where: 'id == ?', whereArgs: [incomeId]);
+      await txn.delete(tTable, where: 'linkId == ? AND linkType == ?', whereArgs: [incomeId, 'income']);
+    });
   }
 
   Future<void> updateIncome(Income updated, int id) async {

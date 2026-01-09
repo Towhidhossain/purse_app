@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/transactions/transactions_fetcher.dart';
 import '../widgets/common/main_drawer.dart';
+import '../widgets/transactions/monthly_statement_action.dart';
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
@@ -27,6 +28,7 @@ class _TransactionsAppBar extends StatelessWidget implements PreferredSizeWidget
   Widget build(BuildContext context) {
     return AppBar(
       title: const Text('Transactions'),
+      actions: const [MonthlyStatementAction()],
     );
   }
 }

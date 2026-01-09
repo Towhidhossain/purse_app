@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/theme_provider.dart';
@@ -15,13 +18,23 @@ class MainDrawer extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final theme = context.watch<ThemeProvider>();
     final user = auth.user;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final avatarHue = user?.avatarHue ?? 210;
-    final avatarColor = HSVColor.fromAHSV(1, avatarHue, 0.55, 0.9).toColor();
     final initials = (user?.displayName.isNotEmpty == true
             ? user!.displayName[0]
             : (user?.email.isNotEmpty == true ? user!.email[0] : '?'))
         .toUpperCase();
+
+    ImageProvider? avatarProvider() {
+      final path = user?.avatarImagePath;
+      if (path == null || path.isEmpty) return null;
+
+      if (kIsWeb) {
+        return NetworkImage(path); // data: URLs or remote paths
+      }
+
+      return FileImage(File(path));
+    }
 
     String routeName(BuildContext context) => ModalRoute.of(context)?.settings.name ?? '';
 
@@ -39,11 +52,18 @@ class MainDrawer extends StatelessWidget {
             UserAccountsDrawerHeader(
               decoration: BoxDecoration(color: Colors.grey.shade900),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: avatarColor,
-                child: Text(
-                  initials,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                ),
+                backgroundColor: colorScheme.primaryContainer,
+                backgroundImage: avatarProvider(),
+                child: avatarProvider() == null
+                    ? Text(
+                        initials,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      )
+                    : null,
               ),
               accountName: Text(user?.displayName.isNotEmpty == true ? user!.displayName : 'Guest'),
               accountEmail: Text(user?.email ?? 'Not signed in'),

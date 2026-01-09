@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -98,18 +99,27 @@ class _IncomeFormState extends State<IncomeForm> {
             const SizedBox(height: 16),
             TextField(
               controller: _amount,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+              ],
               decoration: const InputDecoration(
                 labelText: 'Amount',
-                prefixIcon: Icon(Icons.currency_rupee),
+                prefixText: '৳ ',
+                helperText: 'Numbers only (e.g., 1000.50)',
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _note,
+              keyboardType: TextInputType.text,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+              ],
               decoration: const InputDecoration(
                 labelText: 'Note (optional)',
                 prefixIcon: Icon(Icons.notes_outlined),
+                helperText: 'Letters only',
               ),
             ),
             const SizedBox(height: 12),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
@@ -93,9 +94,14 @@ class _AuthScreenState extends State<AuthScreen> {
                             padding: const EdgeInsets.only(bottom: 12.0),
                             child: TextFormField(
                               controller: _nameController,
+                              keyboardType: TextInputType.name,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                              ],
                               decoration: const InputDecoration(
                                 labelText: 'Display name',
                                 prefixIcon: Icon(Icons.person_outline),
+                                helperText: 'Letters only',
                               ),
                               validator: (value) {
                                 if (isSignIn) return null;

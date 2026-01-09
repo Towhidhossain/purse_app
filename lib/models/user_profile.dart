@@ -3,21 +3,21 @@ class UserProfile {
     required this.id,
     required this.email,
     required this.displayName,
-    required this.avatarHue,
+    this.avatarImagePath,
     required this.createdAt,
   });
 
   final String id;
   final String email;
   final String displayName;
-  final double avatarHue; // 0-360 hue for consistent color
+  final String? avatarImagePath; // Path to stored avatar image
   final DateTime createdAt;
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'email': email,
         'displayName': displayName,
-        'avatarHue': avatarHue,
+        'avatarImagePath': avatarImagePath,
         'createdAt': createdAt.toIso8601String(),
       };
 
@@ -25,19 +25,20 @@ class UserProfile {
         id: json['id'] as String,
         email: json['email'] as String,
         displayName: json['displayName'] as String,
-        avatarHue: (json['avatarHue'] as num).toDouble(),
+        avatarImagePath: json['avatarImagePath'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
 
   UserProfile copyWith({
     String? displayName,
-    double? avatarHue,
+    String? avatarImagePath,
+    bool clearAvatar = false,
   }) {
     return UserProfile(
       id: id,
       email: email,
       displayName: displayName ?? this.displayName,
-      avatarHue: avatarHue ?? this.avatarHue,
+      avatarImagePath: clearAvatar ? null : (avatarImagePath ?? this.avatarImagePath),
       createdAt: createdAt,
     );
   }

@@ -35,7 +35,7 @@ class ExpenseCategory {
         title: value['title'],
         entries: value['entries'],
         totalAmount: double.parse(value['totalAmount']),
-        // it will search the 'icons' map and find the value related to the title.
-        icon: icons[value['title']]!,
+        // Default icon for dynamic categories
+        icon: icons[value['title']] ?? Icons.category,
       );
 }

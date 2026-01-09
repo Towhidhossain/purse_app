@@ -21,7 +21,7 @@ class DatabaseProvider with ChangeNotifier {
 
   FilterPeriod _period = FilterPeriod.month;
   DateTimeRange? _customRange;
-
+  
 
   FilterPeriod get period => _period;
   DateTimeRange? get customRange => _customRange;
@@ -133,7 +133,30 @@ class DatabaseProvider with ChangeNotifier {
       (index) => ExpenseCategory.fromString(data[index]),
     );
     _categories = nList;
+    notifyListeners();
     return _categories;
+  }
+
+  Future<bool> addCategory(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return false;
+    final exists = _categories.any((c) => c.title.toLowerCase() == trimmed.toLowerCase());
+    if (exists) return false;
+
+    await _dbService.insertCategory(trimmed);
+    _categories.add(ExpenseCategory(title: trimmed, entries: 0, totalAmount: 0, icon: Icons.category));
+    notifyListeners();
+    return true;
+  }
+
+  Future<void> deleteCategory(String name) async {
+    await _dbService.deleteCategory(name);
+    _categories.removeWhere((c) => c.title == name);
+
+    _expenses = _expenses.where((e) => e.category != name).toList();
+    _transactions = _transactions.where((t) => t.category != name).toList();
+
+    notifyListeners();
   }
 
   Future<void> updateCategory(
@@ -303,7 +326,7 @@ class DatabaseProvider with ChangeNotifier {
       'label': income.note ?? 'Income',
       'date': income.date.toIso8601String(),
       'note': income.note ?? '',
-      'category': '',
+      'category': 'Income',
       'linkId': file.id,
       'linkType': 'income',
     });
@@ -316,7 +339,7 @@ class DatabaseProvider with ChangeNotifier {
         label: income.note ?? 'Income',
         date: income.date,
         note: income.note ?? '',
-        category: '',
+        category: 'Income',
         linkId: file.id,
         linkType: 'income',
       ),
@@ -338,6 +361,7 @@ class DatabaseProvider with ChangeNotifier {
       'label': updated.note ?? 'Income',
       'date': updated.date.toIso8601String(),
       'note': updated.note ?? '',
+      'category': 'Income',
     }, original.id, 'income');
 
     notifyListeners();
@@ -415,7 +439,10 @@ class DatabaseProvider with ChangeNotifier {
   }
 
   ExpenseCategory findCategory(String title) {
-    return _categories.firstWhere((element) => element.title == title);
+    return _categories.firstWhere(
+      (element) => element.title == title,
+      orElse: () => ExpenseCategory(title: title, entries: 0, totalAmount: 0, icon: Icons.category),
+    );
   }
 
   bool _isInRange(DateTime date) {

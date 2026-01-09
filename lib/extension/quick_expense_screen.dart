@@ -211,10 +211,15 @@ class _QuickExpenseScreenState extends State<QuickExpenseScreen> {
                         // Title Field (Optional)
                         TextFormField(
                           controller: _titleController,
+                          keyboardType: TextInputType.text,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Note (optional)',
                             border: OutlineInputBorder(),
                             isDense: true,
+                            helperText: 'Letters only',
                           ),
                           maxLength: 50,
                         ),

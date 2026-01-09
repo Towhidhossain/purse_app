@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../models/user_profile.dart';
@@ -76,7 +74,7 @@ class AuthProvider with ChangeNotifier {
       id: _generateId(),
       email: email.trim(),
       displayName: displayName.trim(),
-      avatarHue: Random().nextDouble() * 360,
+      avatarImagePath: null,
       createdAt: DateTime.now(),
     );
 
@@ -92,11 +90,11 @@ class AuthProvider with ChangeNotifier {
     return true;
   }
 
-  Future<void> updateProfile({String? displayName, double? avatarHue}) async {
+  Future<void> updateProfile({String? displayName, String? avatarImagePath}) async {
     if (_user == null) return;
     final updated = _user!.copyWith(
       displayName: displayName,
-      avatarHue: avatarHue,
+      avatarImagePath: avatarImagePath,
     );
     _user = updated;
     await _authService.saveProfile(updated);
@@ -113,26 +111,30 @@ class AuthProvider with ChangeNotifier {
     required String currentPassword,
     required String newPassword,
   }) async {
-    _error = null;
-    _loading = true;
-    notifyListeners();
+		// Clear any previous errors
+		_error = null;
+		_loading = true;
+		notifyListeners();
 
-    final ok = await _authService.updatePassword(
-      currentPassword: currentPassword,
-      newPassword: newPassword,
-    );
+		// Verify current password and update only if verification succeeds
+		final ok = await _authService.updatePassword(
+			currentPassword: currentPassword,
+			newPassword: newPassword,
+		);
 
-    if (!ok) {
-      _error = 'Current password is incorrect';
-      _loading = false;
-      notifyListeners();
-      return false;
-    }
+		if (!ok) {
+			// Current password verification failed
+			_error = 'Current password is incorrect. Please try again.';
+			_loading = false;
+			notifyListeners();
+			return false;
+		}
 
-    _loading = false;
-    notifyListeners();
-    return true;
-  }
+		// Password updated successfully
+		_loading = false;
+		notifyListeners();
+		return true;
+	}
 
   String _generateId() => DateTime.now().millisecondsSinceEpoch.toString();
 }
